@@ -47,8 +47,6 @@ public class Constants {
             INSTALL_WIPEDATA,
             INSTALL_WIPECACHES,
             INSTALL_FIXPERM };
-    public static final String INSTALL_OPTIONS_DEFAULT = INSTALL_BACKUP + "|" + INSTALL_WIPESYSTEM
-            + "|" + INSTALL_WIPEDATA + "|" + INSTALL_WIPECACHES + "|" + INSTALL_FIXPERM;
 
     // about preferences
     public static final String PREFERENCE_ABOUT_VERSION = "about_version";
@@ -69,9 +67,11 @@ public class Constants {
     public static final String PREFERENCE_SETTINGS_AUTOLOAD_LIST = "autoloadlist";
     public static final String PREFERENCE_SETTINGS_DOWNLOAD_PATH = "downloadpath";
     public static final String PREFERENCE_SETTINGS_ZIP_POSITION = "zipposition";
-    public static final String PREFERENCE_SETTINGS_OPTIONS = "showoptions";
+    public static final String PREFERENCE_SETTINGS_OPTIONS = "show-options";
     public static final String PREFERENCE_SETTINGS_SPACE_LEFT = "spaceleft";
     public static final String PREFERENCE_SETTINGS_SYSTEMWIPE_ALERT = "wipesystemalert";
+    public static final String PREFERENCE_SETTINGS_USE_FOLDER = "usefolder";
+    public static final String PREFERENCE_SETTINGS_FOLDER = "folder";
 
     // recovery preferences
     public static final String PREFERENCE_RECOVERY_BACKUP = "recovery_activity_backup";
@@ -136,6 +136,10 @@ public class Constants {
             }
         }
         return result;
+    }
+
+    public static String formatDate(final long value) {
+        return SDF.format(value);
     }
 
     public static boolean isSystemApp(Context context) throws Exception {

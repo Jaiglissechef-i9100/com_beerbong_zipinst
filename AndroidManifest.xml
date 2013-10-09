@@ -16,8 +16,8 @@
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.beerbong.zipinst"
-    android:versionCode="400"
-    android:versionName="4.0.0" >
+    android:versionCode="401"
+    android:versionName="4.0.1" >
 
     <uses-sdk
         android:minSdkVersion="11"
@@ -82,26 +82,52 @@
         <activity
             android:name="com.beerbong.zipinst.activities.Settings"
             android:label="@string/settings_title" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.beerbong.zipinst.MainActivity" />
         </activity>
         <activity
             android:name="com.beerbong.zipinst.activities.Recovery"
             android:label="@string/recovery_activity_title" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.beerbong.zipinst.MainActivity" />
+        </activity>
+        <activity
+            android:name="com.beerbong.zipinst.activities.Folder"
+            android:label="@string/folder_activity_title" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.beerbong.zipinst.MainActivity" />
         </activity>
         <activity
             android:name="com.beerbong.zipinst.activities.About"
             android:label="@string/about_title" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.beerbong.zipinst.activities.Settings" />
         </activity>
         <activity
             android:name="com.beerbong.zipinst.activities.License"
             android:label="@string/license_title" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.beerbong.zipinst.activities.About" />
         </activity>
         <activity
             android:name="com.beerbong.zipinst.activities.Changelog"
             android:label="@string/changelog_title" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.beerbong.zipinst.activities.About" />
         </activity>
 
         <!-- PRO -->
-        <activity android:name="com.beerbong.zipinst.pro.activities.GooActivity" />
+        <activity android:name="com.beerbong.zipinst.pro.activities.GooActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.beerbong.zipinst.MainActivity" />
+        </activity>
 
         <receiver android:name="com.beerbong.zipinst.pro.NotificationAlarm" />
 

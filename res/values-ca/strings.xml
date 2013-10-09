@@ -19,6 +19,9 @@
     <string name="alert_reboot_title">"Seleccionar accions i instal·lar"</string>
     <string name="alert_reboot_now">"Instal·lar ara"</string>
 
+    <string name="root_needed_title">Root necessari</string>
+    <string name="root_needed_summary">Impossible aconseguir accés root. L\'aplicació es tancarà.</string>
+
     <string name="alert_wipe_system_title">System wipe</string>
     <string name="alert_wipe_system_message">Estàs a punt de fer un system wipe. Estàs segur que ho vols fer?</string>
 
@@ -116,6 +119,18 @@
 
     <string name="donate_title">Donar</string>
 
+    <string name="usefolder_title">"Botó d'instal·lar obre carpeta"</string>
+    <string name="usefolder_summary">Si està actiu, l\'aplicació obrirà el contingut d\'una carpeta en lloc d\'un explorador d\'arxius.</string>
+
+    <string name="folder_title">Carpeta per defecte</string>
+    <string name="folder_error">La carpeta no existeix o no és un directori</string>
+
+    <string name="folder_activity_title">Selecciona un arxiu</string>
+    <string name="alert_remove_file_title">Esborrar arxiu</string>
+    <string name="alert_remove_file_summary">Estàs segur que vols esborrar %1$s?</string>
+    <string name="alert_remove_file_done">Arxiu esborrat</string>
+    <string name="alert_remove_file_not_done">Arxiu no esborrat</string>
+
     <string name="dad_title">Drag &amp; drop</string>
     <string name="dad_summary">Utilitzar drag &amp; drop per a reordenar la llista</string>
 
@@ -156,10 +171,6 @@
     <string name="downloading_error">Error baixant arxiu</string>
     <string name="downloading_interrupted">Baixada interrompuda</string>
     <string name="downloading_nospace">Error baixant arxiu: no hi ha espai</string>
-
-    <string name="download_alert_title">Ruta de les descàrregues</string>
-    <string name="download_alert_summary">Especifica la ruta on guardar les descàrregues</string>
-    <string name="download_alert_error">Per favor especifica la ruta on guardar les descàrregues</string>
 
     <string name="downloadzip_alert_title">Descarregar zip</string>
     <string name="downloadzip_alert_summary">Especifica la url del zip</string>

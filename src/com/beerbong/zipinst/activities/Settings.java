@@ -16,8 +16,6 @@
 
 package com.beerbong.zipinst.activities;
 
-import java.util.List;
-
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -25,6 +23,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.preference.CheckBoxPreference;
 import android.preference.ListPreference;
+import android.preference.MultiSelectListPreference;
 import android.preference.Preference;
 import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.PreferenceCategory;
@@ -46,6 +45,7 @@ import com.beerbong.zipinst.manager.ProManager.ManageMode;
 import com.beerbong.zipinst.ui.UI;
 import com.beerbong.zipinst.util.Constants;
 import com.beerbong.zipinst.util.RecoveryInfo;
+import com.beerbong.zipinst.widget.DirectoryChooserDialog;
 import com.beerbong.zipinst.widget.PreferenceActivity;
 
 public class Settings extends PreferenceActivity implements OnPreferenceChangeListener {
@@ -62,14 +62,16 @@ public class Settings extends PreferenceActivity implements OnPreferenceChangeLi
     private CheckBoxPreference mSystemWipeAlert;
     private Preference mDownloadPath;
     private ListPreference mZipPosition;
-    private ListPreference mOptions;
+    private MultiSelectListPreference mOptions;
     private ListPreference mSpaceLeft;
+    private CheckBoxPreference mUseFolder;
+    private Preference mFolder;
 
     @Override
     @SuppressWarnings("deprecation")
     protected void onCreate(Bundle savedInstanceState) {
 
-        super.onCreate(savedInstanceState, R.xml.settings);
+        super.onCreate(savedInstanceState, R.layout.settings);
 
         mRecovery = findPreference(Constants.PREFERENCE_SETTINGS_RECOVERY);
         mInternalSdcard = findPreference(Constants.PREFERENCE_SETTINGS_INTERNAL_SDCARD);
@@ -82,9 +84,11 @@ public class Settings extends PreferenceActivity implements OnPreferenceChangeLi
         mAutoloadList = (CheckBoxPreference) findPreference(Constants.PREFERENCE_SETTINGS_AUTOLOAD_LIST);
         mDownloadPath = findPreference(Constants.PREFERENCE_SETTINGS_DOWNLOAD_PATH);
         mZipPosition = (ListPreference) findPreference(Constants.PREFERENCE_SETTINGS_ZIP_POSITION);
-        mOptions = (ListPreference) findPreference(Constants.PREFERENCE_SETTINGS_OPTIONS);
+        mOptions = (MultiSelectListPreference) findPreference(Constants.PREFERENCE_SETTINGS_OPTIONS);
         mSpaceLeft = (ListPreference) findPreference(Constants.PREFERENCE_SETTINGS_SPACE_LEFT);
         mSystemWipeAlert = (CheckBoxPreference) findPreference(Constants.PREFERENCE_SETTINGS_SYSTEMWIPE_ALERT);
+        mUseFolder = (CheckBoxPreference) findPreference(Constants.PREFERENCE_SETTINGS_USE_FOLDER);
+        mFolder = findPreference(Constants.PREFERENCE_SETTINGS_FOLDER);
 
         PreferencesManager pManager = ManagerFactory.getPreferencesManager();
 
@@ -101,14 +105,16 @@ public class Settings extends PreferenceActivity implements OnPreferenceChangeLi
         mAutoloadList.setChecked(pManager.isAutoloadList());
 
         mZipPosition.setValue(pManager.getZipPosition());
+        mZipPosition.setOnPreferenceChangeListener(this);
 
-        mOptions.setValue(pManager.getShowOptions());
-        mOptions.setOnPreferenceChangeListener(this);
+        mOptions.setValues(pManager.getShowOptions());
 
         mSpaceLeft.setValue(String.valueOf(pManager.getSpaceLeft()));
         mSpaceLeft.setOnPreferenceChangeListener(this);
 
         mSystemWipeAlert.setChecked(pManager.isShowSystemWipeAlert());
+
+        mUseFolder.setChecked(pManager.isUseFolder());
         
         if (!ManagerFactory.getFileManager().hasExternalStorage()) {
             getPreferenceScreen().removePreference(mExternalSdcard);
@@ -192,12 +198,25 @@ public class Settings extends PreferenceActivity implements OnPreferenceChangeLi
 
         } else if (Constants.PREFERENCE_SETTINGS_DOWNLOAD_PATH.equals(key)) {
 
-            selectDownloadPath();
+            selectFolder(pManager.getDownloadPath(), new DirectoryChooserDialog.DirectoryChooserListener() {
 
-        } else if (Constants.PREFERENCE_SETTINGS_ZIP_POSITION.equals(key)) {
+                @Override
+                public void onDirectoryChosen(String chosenDir) {
+                    ManagerFactory.getPreferencesManager().setDownloadPath(chosenDir);
+                    updateSummaries();
+                }
+            });
 
-            String zipPosition = ((ListPreference) preference).getValue();
-            pManager.setZipPosition(zipPosition);
+        } else if (Constants.PREFERENCE_SETTINGS_FOLDER.equals(key)) {
+
+            selectFolder(pManager.getFolder(), new DirectoryChooserDialog.DirectoryChooserListener() {
+
+                @Override
+                public void onDirectoryChosen(String chosenDir) {
+                    ManagerFactory.getPreferencesManager().setFolder(chosenDir);
+                    updateSummaries();
+                }
+            });
 
         } else if (Constants.PREFERENCE_SETTINGS_SYSTEMWIPE_ALERT.equals(key)) {
 
@@ -226,19 +245,14 @@ public class Settings extends PreferenceActivity implements OnPreferenceChangeLi
 
         PreferencesManager pManager = ManagerFactory.getPreferencesManager();
 
-        if (Constants.PREFERENCE_SETTINGS_OPTIONS.equals(key)) {
-            List<String> values = (List<String>) newValue;
-            String result = "";
-            for (int i = 0; i < values.size(); i++) {
-                result += values.get(i);
-                if (i < values.size() - 1)
-                    result += "|";
-            }
-            pManager.setShowOptions(result);
-
-        } else if (Constants.PREFERENCE_SETTINGS_SPACE_LEFT.equals(key)) {
+        if (Constants.PREFERENCE_SETTINGS_SPACE_LEFT.equals(key)) {
 
             pManager.setSpaceLeft(Double.parseDouble(newValue.toString()));
+
+        } else if (Constants.PREFERENCE_SETTINGS_ZIP_POSITION.equals(key)) {
+
+            pManager.setZipPosition((String)newValue);
+
         }
         return false;
     }
@@ -253,39 +267,12 @@ public class Settings extends PreferenceActivity implements OnPreferenceChangeLi
         mExternalSdcard.setSummary(getResources().getText(R.string.externalsdcard_summary) + " ("
                 + pManager.getExternalStorage() + ")");
         mDownloadPath.setSummary(pManager.getDownloadPath());
+        mFolder.setSummary(pManager.getFolder());
     }
 
-    private void selectDownloadPath() {
-        final EditText input = new EditText(this);
-        input.setText(ManagerFactory.getPreferencesManager().getDownloadPath());
-
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.download_alert_title)
-                .setMessage(R.string.download_alert_summary)
-                .setView(input)
-                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-
-                    public void onClick(DialogInterface dialog, int whichButton) {
-                        String value = input.getText().toString();
-
-                        if (value == null || "".equals(value.trim()) || !value.startsWith("/")) {
-                            Toast.makeText(Settings.this, R.string.download_alert_error,
-                                    Toast.LENGTH_SHORT).show();
-                            dialog.dismiss();
-                            return;
-                        }
-
-                        ManagerFactory.getPreferencesManager().setDownloadPath(value);
-                        updateSummaries();
-                        dialog.dismiss();
-                    }
-                })
-                .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-
-                    public void onClick(DialogInterface dialog, int whichButton) {
-                        dialog.dismiss();
-                    }
-                }).show();
+    private void selectFolder(String defaultValue,
+            DirectoryChooserDialog.DirectoryChooserListener listener) {
+        new DirectoryChooserDialog(this, listener).chooseDirectory(defaultValue);
     }
 
     private void selectSdcard(final boolean internal) {
