@@ -23,7 +23,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Scanner;
 import java.util.StringTokenizer;
@@ -50,11 +49,14 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.beerbong.zipinst.R;
+import com.beerbong.zipinst.activities.Folder;
+import com.beerbong.zipinst.manager.SUManager.CommandResult;
 import com.beerbong.zipinst.ui.UI;
 import com.beerbong.zipinst.ui.UIListener;
 import com.beerbong.zipinst.util.Constants;
 import com.beerbong.zipinst.util.DownloadTask;
 import com.beerbong.zipinst.util.FileItem;
+import com.beerbong.zipinst.util.NoSuException;
 import com.beerbong.zipinst.util.StoredItems;
 
 public class FileManager extends Manager implements UIListener {
@@ -63,7 +65,7 @@ public class FileManager extends Manager implements UIListener {
     private String mExternalStoragePath;
     private int mSelectedBackup = -1;
 
-    protected FileManager(Context context) {
+    protected FileManager(Context context) throws NoSuException {
         super(context);
 
         UI.getInstance().addUIListener(this);
@@ -71,7 +73,7 @@ public class FileManager extends Manager implements UIListener {
         init();
     }
 
-    private void init() {
+    private void init() throws NoSuException {
 
         readMounts();
 
@@ -85,20 +87,29 @@ public class FileManager extends Manager implements UIListener {
 
     public void onButtonClicked(int id) {
         if (id == R.id.choose_zip) {
-            PackageManager packageManager = mContext.getPackageManager();
-            Intent test = new Intent(Intent.ACTION_GET_CONTENT);
-            test.setType("file/*");
-            List<ResolveInfo> list = packageManager.queryIntentActivities(test,
-                    PackageManager.GET_ACTIVITIES);
-            if (list.size() > 0) {
-                Intent intent = new Intent(Intent.ACTION_GET_CONTENT, null);
-                intent.setType("file/*");
-                getActivity().startActivityForResult(intent, Constants.REQUEST_PICK_FILE);
+            if (ManagerFactory.getPreferencesManager().isUseFolder()) {
+                File folder = new File(ManagerFactory.getPreferencesManager().getFolder());
+                if (!folder.exists() || !folder.isDirectory()) {
+                    Toast.makeText(mContext, R.string.folder_error, Toast.LENGTH_SHORT).show();
+                } else {
+                    mContext.startActivity(new Intent(mContext, Folder.class));
+                }
             } else {
-                // No app installed to handle the intent - file explorer
-                // required
-                Toast.makeText(mContext, R.string.install_file_manager_error, Toast.LENGTH_SHORT)
-                        .show();
+                PackageManager packageManager = mContext.getPackageManager();
+                Intent test = new Intent(Intent.ACTION_GET_CONTENT);
+                test.setType("file/*");
+                List<ResolveInfo> list = packageManager.queryIntentActivities(test,
+                        PackageManager.GET_ACTIVITIES);
+                if (list.size() > 0) {
+                    Intent intent = new Intent(Intent.ACTION_GET_CONTENT, null);
+                    intent.setType("file/*");
+                    getActivity().startActivityForResult(intent, Constants.REQUEST_PICK_FILE);
+                } else {
+                    // No app installed to handle the intent - file explorer
+                    // required
+                    Toast.makeText(mContext, R.string.install_file_manager_error,
+                            Toast.LENGTH_SHORT).show();
+                }
             }
         }
     }
@@ -352,6 +363,21 @@ public class FileManager extends Manager implements UIListener {
 
         String sdcardPath = new String(filePath);
 
+        filePath = getPath(filePath);
+
+        File file = new File(sdcardPath);
+        if (!file.exists()) {
+            Toast.makeText(mContext, R.string.install_file_manager_not_found_zip, Toast.LENGTH_LONG)
+                    .show();
+        } else {
+
+            UI.getInstance().addItem(filePath, sdcardPath);
+        }
+    }
+
+    public String getPath(String path) {
+        String filePath = new String(path);
+
         String internalStorage = ManagerFactory.getPreferencesManager().getInternalStorage();
         String externalStorage = ManagerFactory.getPreferencesManager().getExternalStorage();
 
@@ -402,15 +428,7 @@ public class FileManager extends Manager implements UIListener {
                 }
             }
         }
-
-        File file = new File(sdcardPath);
-        if (!file.exists()) {
-            Toast.makeText(mContext, R.string.install_file_manager_not_found_zip, Toast.LENGTH_LONG)
-                    .show();
-        } else {
-
-            UI.getInstance().addItem(filePath, sdcardPath);
-        }
+        return filePath;
     }
 
     public void showDeleteDialog(final Context context) {
@@ -543,7 +561,7 @@ public class FileManager extends Manager implements UIListener {
                 R.string.alert_file_summary,
                 new Object[] { (file.getParent() == null ? "" : file.getParent()) + "/",
                         Constants.formatSize(file.length()),
-                        new Date(file.lastModified()).toString() }));
+                        Constants.formatDate(file.lastModified()) }));
 
         alert.setPositiveButton(R.string.alert_file_close, new DialogInterface.OnClickListener() {
 
@@ -769,7 +787,7 @@ public class FileManager extends Manager implements UIListener {
         return sdAvailSize / 1073741824;
     }
 
-    private void readMounts() {
+    private void readMounts() throws NoSuException {
 
         ArrayList<String> mounts = new ArrayList<String>();
         ArrayList<String> vold = new ArrayList<String>();
@@ -881,13 +899,17 @@ public class FileManager extends Manager implements UIListener {
         return null;
     }
 
-    private void copyOrRemoveCache(File file, boolean copy) {
+    private void copyOrRemoveCache(File file, boolean copy) throws NoSuException {
         SUManager suManager = ManagerFactory.getSUManager(mContext);
+        CommandResult cm = null;
         if (copy) {
-            suManager.runWaitFor("cp " + file.getAbsolutePath() + " /cache/" + file.getName());
+            cm = suManager.runWaitFor("cp " + file.getAbsolutePath() + " /cache/" + file.getName());
             suManager.runWaitFor("chmod 644 /cache/" + file.getName());
         } else {
-            suManager.runWaitFor("rm -f /cache/" + file.getName());
+            cm = suManager.runWaitFor("rm -f /cache/" + file.getName());
+        }
+        if (!cm.success()) {
+            throw new NoSuException();
         }
     }
 }

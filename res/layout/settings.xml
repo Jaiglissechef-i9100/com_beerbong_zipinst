@@ -33,11 +33,10 @@
             android:summary="@string/externalsdcard_summary"
             android:title="@string/externalsdcard_title" />
 
-        <com.beerbong.zipinst.widget.ListPreferenceMultiSelect
-            android:defaultValue="BACKUP|WIPESYSTEM|WIPEDATA|WIPECACHES|FIXPERM"
+        <MultiSelectListPreference
             android:entries="@array/wipe_options"
             android:entryValues="@array/wipe_options_values"
-            android:key="showoptions"
+            android:key="show-options"
             android:summary="@string/settings_showoptions_summary"
             android:title="@string/settings_showoptions_title" />
     </PreferenceCategory>
@@ -69,6 +68,16 @@
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/settings_interface" >
+
+        <CheckBoxPreference
+            android:key="usefolder"
+            android:summary="@string/usefolder_summary"
+            android:title="@string/usefolder_title" />
+
+        <Preference
+            android:key="folder"
+            android:dependency="usefolder"
+            android:title="@string/folder_title" />
 
         <CheckBoxPreference
             android:key="draganddrop"
